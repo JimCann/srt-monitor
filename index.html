@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CannDo — SRT Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0b0e;--p1:#131318;--p2:#1a1a22;
+  --b1:#252530;--b2:#32323f;
+  --amber:#f0a020;--white:#eaeaf8;--muted:#555570;
+  --green:#3ec87a;--yellow:#c09030;--red:#d94040;
+  --next:#808098;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Outfit',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:var(--sans);font-size:13px;overflow:hidden}
+
+/* Header */
+.hdr{display:flex;align-items:center;gap:16px;padding:9px 16px;background:var(--p1);border-bottom:1px solid var(--b1);flex-shrink:0}
+.logo{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--amber);text-transform:uppercase;white-space:nowrap}
+.logo em{color:var(--muted);font-style:normal}
+.file-btns{display:flex;gap:7px;align-items:center}
+.fbtn{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--p2);border:1px solid var(--b1);border-radius:5px;color:var(--white);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:border-color .12s,background .12s;white-space:nowrap}
+.fbtn:hover{border-color:var(--amber);background:#1e1e28}
+.fbtn.ok{border-color:var(--green);color:var(--green)}
+input[type=file]{display:none}
+.status{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em}
+.status.ok{color:var(--green)}
+.kbd-hint{margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em;white-space:nowrap}
+
+/* Body */
+.body{display:flex;height:calc(100vh - 43px);overflow:hidden}
+
+/* Left col */
+.left{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* Video */
+.vwrap{position:relative;background:#000;flex-shrink:0;line-height:0}
+video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#000}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;color:var(--muted);font-size:13px;min-height:180px;gap:8px;width:100%}
+.ph-icon{font-size:40px;opacity:.2}
+.cap-overlay{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);width:90%;text-align:center;pointer-events:none;z-index:10}
+.cap-text{display:inline-block;background:rgba(0,0,0,.82);color:#fff;font-family:var(--sans);font-size:clamp(14px,1.8vw,22px);font-weight:500;line-height:1.4;padding:5px 14px 7px;border-radius:3px;white-space:pre-line;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+
+/* Diagnostics */
+.diag{background:var(--p1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:9px 14px;flex-shrink:0}
+.diag-row{display:flex;gap:0}
+.dc{flex:1;padding:0 12px;border-right:1px solid var(--b1)}
+.dc:first-child{padding-left:0}
+.dc:last-child{border-right:none;flex:.7}
+.dl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.dv{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--white)}
+.dv.amber{color:var(--amber)}.dv.green{color:var(--green)}.dv.yellow{color:var(--yellow)}.dv.red{color:var(--red)}.dv.muted{color:var(--muted)}
+
+/* Next caption */
+.nxt{padding:7px 14px;background:var(--p2);border-bottom:1px solid var(--b1);flex-shrink:0}
+.nxt-lbl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.nxt-text{font-size:13px;color:var(--next);font-style:italic;white-space:pre-line;min-height:18px}
+
+/* Flag bar */
+.flg-bar{padding:7px 14px;background:var(--p1);border-bottom:1px solid var(--b1);display:flex;gap:7px;align-items:center;flex-wrap:wrap;flex-shrink:0}
+.ft-grp{display:flex;gap:5px}
+.ftb{padding:4px 9px;border:1px solid var(--b2);border-radius:4px;background:transparent;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.ftb:hover{border-color:var(--amber);color:var(--amber)}
+.ftb.sel{border-color:var(--red);background:rgba(217,64,64,.12);color:var(--red)}
+.flg-note{flex:1;min-width:80px;padding:4px 9px;background:var(--p2);border:1px solid var(--b1);border-radius:4px;color:var(--white);font-family:var(--sans);font-size:12px;outline:none}
+.flg-note::placeholder{color:var(--muted)}
+.flg-note:focus{border-color:var(--b2)}
+.btn-flag{padding:4px 13px;background:rgba(217,64,64,.12);border:1px solid var(--red);border-radius:4px;color:var(--red);font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .1s;white-space:nowrap}
+.btn-flag:hover{background:rgba(217,64,64,.26)}
+.flg-ct{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.flg-ct.has{color:var(--red)}
+.btn-export{padding:4px 11px;background:transparent;border:1px solid var(--b2);border-radius:4px;color:var(--muted);font-family:var(--sans);font-size:10px;cursor:pointer;transition:all .1s;white-space:nowrap}
+.btn-export:hover{border-color:var(--white);color:var(--white)}
+
+/* Flag log */
+.flg-log{flex:1;overflow-y:auto;background:var(--bg)}
+.flg-empty{padding:14px;color:var(--muted);font-size:12px;font-style:italic}
+.fi{display:flex;gap:8px;align-items:flex-start;padding:6px 14px;border-bottom:1px solid rgba(37,37,48,.6);cursor:default}
+.fi:hover{background:var(--p2)}
+.fi-num{font-family:var(--mono);font-size:10px;color:var(--muted);width:28px;flex-shrink:0;padding-top:2px}
+.fi-tc{font-family:var(--mono);font-size:10px;color:var(--amber);flex-shrink:0;padding-top:2px;width:68px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(240,160,32,.35)}
+.fi-type{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);width:76px;flex-shrink:0;padding-top:3px}
+.fi-body{flex:1}
+.fi-text{font-size:12px;color:#808098;white-space:pre-line;line-height:1.35}
+.fi-meta{font-size:10px;color:var(--muted);margin-top:1px}
+.fi-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0}
+.fi-rm:hover{color:var(--red)}
+
+/* Sidebar */
+.sidebar{width:250px;flex-shrink:0;background:var(--p1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+.sb-hdr{padding:8px 12px;border-bottom:1px solid var(--b1);font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;flex-shrink:0}
+.sb-total{color:var(--amber);font-family:var(--mono)}
+.cap-list{overflow-y:auto;flex:1}
+.cl-empty{padding:14px;color:var(--muted);font-size:11px;font-style:italic}
+.cl-item{display:flex;gap:7px;align-items:flex-start;padding:5px 12px;border-bottom:1px solid rgba(37,37,48,.5);cursor:pointer;transition:background .1s}
+.cl-item:hover{background:var(--p2)}
+.cl-item.active{background:rgba(240,160,32,.07);border-left:2px solid var(--amber);padding-left:10px}
+.cl-tc{font-family:var(--mono);font-size:9px;color:var(--muted);padding-top:2px;flex-shrink:0;width:54px}
+.cl-item.active .cl-tc{color:var(--amber)}
+.cl-text{font-size:11px;color:#808098;white-space:pre-line;line-height:1.35}
+.cl-item.active .cl-text{color:var(--white)}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">CannDo <em>/</em> SRT Monitor</div>
+  <div class="file-btns">
+    <label class="fbtn" id="lbl-v">
+      <span id="lbl-v-txt">&#9654; Video</span>
+      <input type="file" id="inp-v" accept="video/*,audio/*">
+    </label>
+    <label class="fbtn" id="lbl-s">
+      <span id="lbl-s-txt">&#9776; SRT</span>
+      <input type="file" id="inp-s" accept=".srt,.txt">
+    </label>
+  </div>
+  <div class="status" id="status">Load video + SRT to begin</div>
+  <div class="kbd-hint">F = flag &nbsp;|&nbsp; 1–5 = issue type &nbsp;|&nbsp; click list to seek</div>
+</div>
+
+<div class="body">
+
+  <div class="left">
+
+    <div class="vwrap" id="vwrap">
+      <div class="ph" id="ph">
+        <div class="ph-icon">&#9654;</div>
+        <div>Load a video file to begin</div>
+      </div>
+      <video id="vid" controls preload="auto" style="display:none"></video>
+      <div class="cap-overlay">
+        <div class="cap-text" id="cap-el" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="diag">
+      <div class="diag-row">
+        <div class="dc">
+          <div class="dl">Playhead</div>
+          <div class="dv amber" id="d-time">--:--:--.---</div>
+        </div>
+        <div class="dc">
+          <div class="dl">Caption</div>
+          <div class="dv" id="d-idx">-- / --</div>
+        </div>
+        <div class="dc">
+          <div class="dl">Start</div>
+          <div class="dv muted" id="d-start">--:--:--.---</div>
+        </div>
+        <div class="dc">
+          <div class="dl">End</div>
+          <div class="dv muted" id="d-end">--:--:--.---</div>
+        </div>
+        <div class="dc">
+          <div class="dl">Duration</div>
+          <div class="dv" id="d-dur">--</div>
+        </div>
+        <div class="dc">
+          <div class="dl">Gap &#8594; Next</div>
+          <div class="dv" id="d-gap">--</div>
+        </div>
+        <div class="dc">
+          <div class="dl">Lines</div>
+          <div class="dv" id="d-lines">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nxt">
+      <div class="nxt-lbl">Next caption</div>
+      <div class="nxt-text" id="d-next">--</div>
+    </div>
+
+    <div class="flg-bar">
+      <div class="ft-grp" id="ft-grp">
+        <button class="ftb" data-t="Too Early">1 Too Early</button>
+        <button class="ftb" data-t="Too Late">2 Too Late</button>
+        <button class="ftb" data-t="Too Long">3 Too Long</button>
+        <button class="ftb" data-t="Read-ahead">4 Read-ahead</button>
+        <button class="ftb" data-t="Other">5 Other</button>
+      </div>
+      <input class="flg-note" id="flg-note" type="text" placeholder="Note (optional)">
+      <button class="btn-flag" id="btn-flag">&#9873; Flag (F)</button>
+      <span class="flg-ct" id="flg-ct">0 flags</span>
+      <button class="btn-export" id="btn-export">Export Report</button>
+    </div>
+
+    <div class="flg-log" id="flg-log">
+      <div class="flg-empty">No flags yet. Play the video, then press F or click Flag to mark the current caption.</div>
+    </div>
+
+  </div>
+
+  <div class="sidebar">
+    <div class="sb-hdr">
+      <span>All Captions</span>
+      <span class="sb-total" id="sb-total">--</span>
+    </div>
+    <div class="cap-list" id="cap-list">
+      <div class="cl-empty">Load SRT to see captions</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var captions = [];
+var flags = [];
+var selFlagType = null;
+var lastCapIdx = undefined;
+var frameCount = 0;
+var loopStarted = false;
+
+var vid = document.getElementById('vid');
+var capEl = document.getElementById('cap-el');
+
+// ── SRT Parser ────────────────────────────────────────────────────────────────
+function parseSRT(raw) {
+  var text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  var blocks = text.split(/\n[ \t]*\n/);
+  var result = [];
+  for (var i = 0; i < blocks.length; i++) {
+    var block = blocks[i].trim();
+    if (!block) continue;
+    var lines = block.split('\n');
+    var tcLine = -1;
+    for (var j = 0; j < lines.length; j++) {
+      if (lines[j].indexOf('-->') !== -1) { tcLine = j; break; }
+    }
+    if (tcLine === -1) continue;
+    var halves = lines[tcLine].split('-->');
+    if (halves.length < 2) continue;
+    var start = tcToSec(halves[0].trim());
+    var end   = tcToSec(halves[1].trim());
+    var txt   = lines.slice(tcLine + 1).join('\n').trim();
+    if (!txt) continue;
+    result.push({ idx: result.length, start: start, end: end, text: txt });
+  }
+  return result;
+}
+
+function tcToSec(s) {
+  s = s.replace(',', '.').trim();
+  var p = s.split(':');
+  if (p.length < 3) return 0;
+  return parseFloat(p[0]) * 3600 + parseFloat(p[1]) * 60 + parseFloat(p[2]);
+}
+
+function secToTC(s) {
+  if (!isFinite(s) || s < 0) return '--:--:--.---';
+  var h  = Math.floor(s / 3600);
+  var m  = Math.floor((s % 3600) / 60);
+  var sc = Math.floor(s % 60);
+  var ms = Math.round((s % 1) * 1000);
+  if (ms >= 1000) { ms -= 1000; sc += 1; }
+  return p2(h) + ':' + p2(m) + ':' + p2(sc) + '.' + p3(ms);
+}
+
+function p2(n) { return String(Math.floor(n)).padStart(2, '0'); }
+function p3(n) { return String(Math.floor(n)).padStart(3, '0'); }
+function secFmt(s) { return isFinite(s) ? s.toFixed(2) + 's' : '--'; }
+
+// ── File Loading ──────────────────────────────────────────────────────────────
+document.getElementById('inp-v').addEventListener('change', function(e) {
+  var f = e.target.files[0];
+  if (!f) return;
+  vid.src = URL.createObjectURL(f);
+  vid.style.display = 'block';
+  document.getElementById('ph').style.display = 'none';
+  document.getElementById('lbl-v-txt').textContent = '\u2713 ' + truncate(f.name, 22);
+  document.getElementById('lbl-v').classList.add('ok');
+  if (!loopStarted) { loopStarted = true; requestAnimationFrame(tick); }
+  checkReady();
+});
+
+document.getElementById('inp-s').addEventListener('change', function(e) {
+  var f = e.target.files[0];
+  if (!f) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    captions = parseSRT(ev.target.result);
+    lastCapIdx = undefined;
+    buildCapList();
+    document.getElementById('lbl-s-txt').textContent = '\u2713 ' + captions.length + ' captions';
+    document.getElementById('lbl-s').classList.add('ok');
+    document.getElementById('sb-total').textContent = captions.length;
+    checkReady();
+  };
+  reader.readAsText(f);
+});
+
+function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
+
+function checkReady() {
+  var hasV = vid.src && vid.src !== window.location.href;
+  var hasS = captions.length > 0;
+  var el = document.getElementById('status');
+  if (hasV && hasS) {
+    el.textContent = 'Ready \u2014 ' + captions.length + ' captions loaded';
+    el.className = 'status ok';
+  } else if (hasV) {
+    el.textContent = 'Video loaded \u2014 load SRT to continue';
+    el.className = 'status';
+  } else if (hasS) {
+    el.textContent = 'SRT loaded \u2014 load video to continue';
+    el.className = 'status';
+  }
+}
+
+// ── rAF Loop ──────────────────────────────────────────────────────────────────
+function tick() {
+  frameCount++;
+  var t = vid.currentTime;
+
+  document.getElementById('d-time').textContent = secToTC(t);
+
+  // Find current caption
+  var found = -1;
+  for (var i = 0; i < captions.length; i++) {
+    if (t >= captions[i].start && t < captions[i].end) { found = i; break; }
+  }
+
+  // Update caption overlay
+  if (found >= 0) {
+    var txt = captions[found].text;
+    if (capEl.textContent !== txt) capEl.textContent = txt;
+    capEl.style.display = '';
+  } else {
+    capEl.style.display = 'none';
+  }
+
+  // Update diagnostics only when caption changes
+  if (found !== lastCapIdx) {
+    lastCapIdx = found;
+    if (found >= 0) {
+      updateDiag(found);
+      setActive(found);
+    } else {
+      clearDiag();
+      setActive(-1);
+    }
+  }
+
+  // Countdown update every ~8 frames when between captions
+  if (found < 0 && frameCount % 8 === 0) {
+    updateCountdown(t);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ── Diagnostics ───────────────────────────────────────────────────────────────
+function updateDiag(i) {
+  var cap  = captions[i];
+  var next = captions[i + 1] || null;
+  var dur  = cap.end - cap.start;
+  var gap  = next ? next.start - cap.end : null;
+  var lines = cap.text.split('\n').length;
+
+  document.getElementById('d-idx').textContent   = (i + 1) + ' / ' + captions.length;
+  document.getElementById('d-start').textContent = secToTC(cap.start);
+  document.getElementById('d-end').textContent   = secToTC(cap.end);
+  document.getElementById('d-lines').textContent = lines === 1 ? '1 line' : '2 lines';
+
+  var durEl = document.getElementById('d-dur');
+  durEl.textContent = secFmt(dur);
+  durEl.className = 'dv' + (dur > 9 ? ' red' : dur > 6 ? ' yellow' : '');
+
+  var gapEl = document.getElementById('d-gap');
+  if (gap === null) {
+    gapEl.textContent = '(last)';
+    gapEl.className = 'dv muted';
+  } else {
+    gapEl.textContent = secFmt(gap);
+    gapEl.className = 'dv' + (gap > 10 ? ' red' : gap > 3 ? ' yellow' : ' green');
+  }
+
+  document.getElementById('d-next').textContent = next ? next.text : '(end of captions)';
+}
+
+function clearDiag() {
+  document.getElementById('d-idx').textContent   = '-- / ' + (captions.length || '--');
+  document.getElementById('d-start').textContent = '--:--:--.---';
+  document.getElementById('d-end').textContent   = '--:--:--.---';
+  document.getElementById('d-dur').textContent   = '--';
+  document.getElementById('d-dur').className     = 'dv';
+  document.getElementById('d-gap').textContent   = '--';
+  document.getElementById('d-gap').className     = 'dv muted';
+  document.getElementById('d-lines').textContent = '--';
+}
+
+function updateCountdown(t) {
+  var upcoming = null;
+  for (var i = 0; i < captions.length; i++) {
+    if (captions[i].start > t) { upcoming = captions[i]; break; }
+  }
+  var el = document.getElementById('d-next');
+  if (upcoming) {
+    el.textContent = '[in ' + (upcoming.start - t).toFixed(1) + 's]  ' + upcoming.text;
+  } else {
+    el.textContent = captions.length ? '(end of captions)' : '--';
+  }
+}
+
+// ── Caption List ──────────────────────────────────────────────────────────────
+function buildCapList() {
+  var list = document.getElementById('cap-list');
+  list.innerHTML = '';
+  var frag = document.createDocumentFragment();
+  for (var i = 0; i < captions.length; i++) {
+    (function(cap, idx) {
+      var el  = document.createElement('div');
+      el.className = 'cl-item';
+      el.dataset.idx = idx;
+      var tc  = document.createElement('div');
+      tc.className = 'cl-tc';
+      tc.textContent = secToTC(cap.start).slice(0, 8);
+      var tx  = document.createElement('div');
+      tx.className = 'cl-text';
+      tx.textContent = cap.text;
+      el.appendChild(tc);
+      el.appendChild(tx);
+      el.addEventListener('click', function() {
+        vid.currentTime = cap.start + 0.05;
+        if (vid.paused) vid.play();
+      });
+      frag.appendChild(el);
+    })(captions[i], i);
+  }
+  list.appendChild(frag);
+}
+
+function setActive(idx) {
+  var items = document.getElementById('cap-list').querySelectorAll('.cl-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('active', i === idx);
+  }
+  if (idx >= 0 && items[idx]) {
+    items[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+// ── Flag System ───────────────────────────────────────────────────────────────
+document.getElementById('ft-grp').addEventListener('click', function(e) {
+  var btn = e.target.closest('.ftb');
+  if (!btn) return;
+  var t = btn.dataset.t;
+  if (selFlagType === t) {
+    selFlagType = null;
+    btn.classList.remove('sel');
+  } else {
+    document.querySelectorAll('.ftb').forEach(function(b) { b.classList.remove('sel'); });
+    selFlagType = t;
+    btn.classList.add('sel');
+  }
+});
+
+document.getElementById('btn-flag').addEventListener('click', doFlag);
+
+function doFlag() {
+  if (!captions.length) return;
+  var i = (typeof lastCapIdx === 'number' && lastCapIdx >= 0) ? lastCapIdx : nearestPast();
+  if (i < 0) return;
+
+  var cap  = captions[i];
+  var next = captions[i + 1] || null;
+  flags.push({
+    capNum: i + 1,
+    capIdx: i,
+    tc:     secToTC(cap.start),
+    text:   cap.text,
+    type:   selFlagType || 'Other',
+    note:   document.getElementById('flg-note').value.trim(),
+    dur:    cap.end - cap.start,
+    gap:    next ? next.start - cap.end : null
+  });
+  document.getElementById('flg-note').value = '';
+  renderFlags();
+}
+
+function nearestPast() {
+  var t = vid.currentTime;
+  for (var j = captions.length - 1; j >= 0; j--) {
+    if (captions[j].start <= t) return j;
+  }
+  return -1;
+}
+
+function renderFlags() {
+  var log = document.getElementById('flg-log');
+  var ct  = document.getElementById('flg-ct');
+  ct.textContent = flags.length + (flags.length === 1 ? ' flag' : ' flags');
+  ct.className = 'flg-ct' + (flags.length ? ' has' : '');
+
+  if (!flags.length) {
+    log.innerHTML = '<div class="flg-empty">No flags yet. Play the video, then press F or click Flag to mark the current caption.</div>';
+    return;
+  }
+
+  log.innerHTML = '';
+  var frag = document.createDocumentFragment();
+  flags.forEach(function(f, i) {
+    var el = document.createElement('div');
+    el.className = 'fi';
+    var gapStr = f.gap !== null ? 'gap\u2192next: ' + f.gap.toFixed(2) + 's' : 'last cap';
+    el.innerHTML =
+      '<div class="fi-num">#' + f.capNum + '</div>' +
+      '<div class="fi-tc" data-ci="' + f.capIdx + '">' + f.tc + '</div>' +
+      '<div class="fi-type">' + esc(f.type) + '</div>' +
+      '<div class="fi-body">' +
+        '<div class="fi-text">' + esc(f.text).replace(/\n/g, '<br>') + '</div>' +
+        '<div class="fi-meta">dur: ' + f.dur.toFixed(2) + 's &nbsp;\u00b7&nbsp; ' + gapStr +
+          (f.note ? ' &nbsp;\u00b7&nbsp; ' + esc(f.note) : '') + '</div>' +
+      '</div>' +
+      '<button class="fi-rm" data-fi="' + i + '" title="Remove">\u00d7</button>';
+    frag.appendChild(el);
+  });
+  log.appendChild(frag);
+
+  log.querySelectorAll('.fi-tc').forEach(function(tc) {
+    tc.addEventListener('click', function() {
+      var ci = parseInt(tc.dataset.ci);
+      if (captions[ci]) { vid.currentTime = captions[ci].start + 0.05; if (vid.paused) vid.play(); }
+    });
+  });
+  log.querySelectorAll('.fi-rm').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      flags.splice(parseInt(btn.dataset.fi), 1);
+      renderFlags();
+    });
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', function() {
+  if (!flags.length) { alert('No flags to export.'); return; }
+  var lines = [
+    'CannDo SRT Monitor \u2014 Flag Report',
+    'Generated: ' + new Date().toLocaleString(),
+    'Flags: ' + flags.length,
+    '\u2500'.repeat(56), ''
+  ];
+  flags.forEach(function(f, i) {
+    lines.push('FLAG ' + (i + 1));
+    lines.push('Caption:   #' + f.capNum + '  ' + f.tc);
+    lines.push('Issue:     ' + f.type);
+    lines.push('Duration:  ' + f.dur.toFixed(2) + 's');
+    if (f.gap !== null) lines.push('Gap\u2192next: ' + f.gap.toFixed(2) + 's');
+    lines.push('Text:      ' + f.text.replace(/\n/g, ' / '));
+    if (f.note) lines.push('Note:      ' + f.note);
+    lines.push('');
+  });
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'srt-flags-' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+});
+
+// ── Keyboard Shortcuts ────────────────────────────────────────────────────────
+var typeKeys = { '1':'Too Early', '2':'Too Late', '3':'Too Long', '4':'Read-ahead', '5':'Other' };
+
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key.toLowerCase() === 'f') { e.preventDefault(); doFlag(); return; }
+  if (typeKeys[e.key]) {
+    e.preventDefault();
+    var t = typeKeys[e.key];
+    document.querySelectorAll('.ftb').forEach(function(b) { b.classList.remove('sel'); });
+    if (selFlagType === t) {
+      selFlagType = null;
+    } else {
+      selFlagType = t;
+      document.querySelectorAll('.ftb').forEach(function(b) {
+        if (b.dataset.t === t) b.classList.add('sel');
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>
