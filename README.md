@@ -75,11 +75,31 @@ Design decisions in v1.0 pass were made with this merge in mind:
 
 ---
 
-## Deploy
+## Versioning
 
+Follows the same pattern as CannDo Transcribe.
+
+- `html/index-vX_X.html` — versioned source of truth; filename reflects version
+- `index.html` — deploy artifact at project root; always a copy of the current versioned file
+- Version number is visible in the page header as a small badge (`ver-badge`)
+
+**Version history:**
+| Version | Date | Key change |
+|---------|------|------------|
+| v1.0 | 2026-05-19, 6:23 PM PDT | Design pass v1.0 — brand alignment, typography, header restructure, flag UX, spacebar |
+
+End-of-session workflow:
 ```bash
-cd ~/claude-projects/srt-monitor
+# After making changes to html/index-vX_X.html:
+cp html/index-vX_X.html index.html
+git add .
+git commit -m "vX.X -- description"
+git push
 netlify deploy --prod --site c6cfc095-c3a5-47d3-b4c7-38af39c62ec4 --dir .
 ```
 
-Single-file tool (`index.html`). No build step.
+Always update the `ver-badge` text in the HTML to match the new version number before copying to `index.html`.
+
+---
+
+## Deploy
