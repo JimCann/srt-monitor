@@ -22,7 +22,7 @@ A browser-based QA tool for verifying SRT caption files against source video. Us
 
 **Built with no design brief.** All original color, font, and layout decisions were made at build time with no brand context (JetBrains Mono + Outfit, amber `#f0a020` accent, `#0b0b0e` background).
 
-**Design pass v1.0 — 2026-05-19**  
+**Design pass v1.0 — 2026-05-19, 6:23 PM PDT**  
 Brief: `CannDo-SRTMonitor-Design-Brief-v1.0.docx`  
 Applied via Claude Code. Five priorities completed in sequence:
 
