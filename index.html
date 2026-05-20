@@ -4,35 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CannDo — SRT Monitor</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0b0b0e;--p1:#131318;--p2:#1a1a22;
+  --bg:#0a0a0a;--p1:#131318;--p2:#1a1a22;
   --b1:#252530;--b2:#32323f;
-  --amber:#f0a020;--white:#eaeaf8;--muted:#555570;
+  --blue:#2980b9;--white:#eaeaf8;--muted:#555570;
   --green:#3ec87a;--yellow:#c09030;--red:#d94040;
   --next:#808098;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Outfit',sans-serif;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
 }
 html,body{height:100%;background:var(--bg);color:var(--white);font-family:var(--sans);font-size:13px;overflow:hidden}
 
+/* Stripe bar */
+.stripe-bar{height:3px;background:linear-gradient(90deg,#27ae60 0%,#27ae60 20%,#f1c40f 20%,#f1c40f 40%,#2980b9 40%,#2980b9 60%,#c0392b 60%,#c0392b 80%,#888 80%,#888 100%);flex-shrink:0}
+
 /* Header */
 .hdr{display:flex;align-items:center;gap:16px;padding:9px 16px;background:var(--p1);border-bottom:1px solid var(--b1);flex-shrink:0}
-.logo{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--amber);text-transform:uppercase;white-space:nowrap}
-.logo em{color:var(--muted);font-style:normal}
+.logo{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo-cando{font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--blue);text-transform:uppercase}
+.logo em{font-family:var(--mono);font-size:11px;color:var(--muted);font-style:normal;letter-spacing:.06em}
+
+/* Clapper (static — animation disabled for Monitor) */
+.clapper-wrap{width:28px;height:24px;position:relative;flex-shrink:0}
+.cl-body{position:absolute;bottom:0;left:3px;width:21px;height:14px;background:#ddd;border-radius:2px;box-shadow:1px 2px 6px rgba(0,0,0,.6)}
+.cl-top{position:absolute;top:0;left:4px;width:19px;height:9px;background:#1c1c1c;border-radius:1px;transform:rotate(-14deg);transform-origin:left bottom;box-shadow:0 2px 6px rgba(0,0,0,.7)}
+.cl-stripes{position:absolute;top:1px;left:1px;width:16px;height:6px;display:flex;overflow:hidden;border-radius:1px}
+.cl-stripes span{flex:1}
+
 .file-btns{display:flex;gap:7px;align-items:center}
 .fbtn{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--p2);border:1px solid var(--b1);border-radius:5px;color:var(--white);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:border-color .12s,background .12s;white-space:nowrap}
-.fbtn:hover{border-color:var(--amber);background:#1e1e28}
+.fbtn:hover{border-color:var(--blue);background:#1e1e28}
 .fbtn.ok{border-color:var(--green);color:var(--green)}
+.btn-order{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--b2);color:var(--muted);font-size:9px;font-family:var(--mono);font-weight:700;flex-shrink:0}
 input[type=file]{display:none}
-.status{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em}
+.status{font-size:13px;color:var(--white);font-family:var(--sans);letter-spacing:.02em}
 .status.ok{color:var(--green)}
-.kbd-hint{margin-left:auto;font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em;white-space:nowrap}
 
 /* Body */
-.body{display:flex;height:calc(100vh - 43px);overflow:hidden}
+.body{display:flex;height:calc(100vh - 46px);overflow:hidden}
 
 /* Left col */
 .left{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
@@ -46,62 +58,68 @@ video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#00
 .cap-text{display:inline-block;background:rgba(0,0,0,.82);color:#fff;font-family:var(--sans);font-size:clamp(14px,1.8vw,22px);font-weight:500;line-height:1.4;padding:5px 14px 7px;border-radius:3px;white-space:pre-line;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 
 /* Diagnostics */
-.diag{background:var(--p1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:9px 14px;flex-shrink:0}
+.diag{background:var(--p1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:12px 16px;flex-shrink:0}
 .diag-row{display:flex;gap:0}
 .dc{flex:1;padding:0 12px;border-right:1px solid var(--b1)}
 .dc:first-child{padding-left:0}
 .dc:last-child{border-right:none;flex:.7}
-.dl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.dv{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--white)}
-.dv.amber{color:var(--amber)}.dv.green{color:var(--green)}.dv.yellow{color:var(--yellow)}.dv.red{color:var(--red)}.dv.muted{color:var(--muted)}
+.dl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.dv{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--white)}
+.dv.blue{color:var(--blue)}.dv.green{color:var(--green)}.dv.yellow{color:var(--yellow)}.dv.red{color:var(--red)}.dv.muted{color:var(--muted)}
 
 /* Next caption */
 .nxt{padding:7px 14px;background:var(--p2);border-bottom:1px solid var(--b1);flex-shrink:0}
-.nxt-lbl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.nxt-text{font-size:13px;color:var(--next);font-style:italic;white-space:pre-line;min-height:18px}
+.nxt-lbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.nxt-text{font-size:14px;color:var(--next);font-style:italic;white-space:pre-line;min-height:18px}
 
 /* Flag bar */
 .flg-bar{padding:7px 14px;background:var(--p1);border-bottom:1px solid var(--b1);display:flex;gap:7px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .ft-grp{display:flex;gap:5px}
-.ftb{padding:4px 9px;border:1px solid var(--b2);border-radius:4px;background:transparent;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
-.ftb:hover{border-color:var(--amber);color:var(--amber)}
+.ftb{padding:4px 9px;border:1px solid var(--b2);border-radius:4px;background:transparent;color:var(--muted);font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .1s}
+.ftb:hover{border-color:var(--blue);color:var(--blue)}
 .ftb.sel{border-color:var(--red);background:rgba(217,64,64,.12);color:var(--red)}
 .flg-note{flex:1;min-width:80px;padding:4px 9px;background:var(--p2);border:1px solid var(--b1);border-radius:4px;color:var(--white);font-family:var(--sans);font-size:12px;outline:none}
 .flg-note::placeholder{color:var(--muted)}
 .flg-note:focus{border-color:var(--b2)}
-.btn-flag{padding:4px 13px;background:rgba(217,64,64,.12);border:1px solid var(--red);border-radius:4px;color:var(--red);font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .1s;white-space:nowrap}
+.flg-target{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.btn-flag{padding:4px 13px;background:rgba(217,64,64,.12);border:1px solid var(--red);border-radius:4px;color:var(--red);font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .1s;white-space:nowrap}
 .btn-flag:hover{background:rgba(217,64,64,.26)}
+.btn-flag.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 .flg-ct{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .flg-ct.has{color:var(--red)}
-.btn-export{padding:4px 11px;background:transparent;border:1px solid var(--b2);border-radius:4px;color:var(--muted);font-family:var(--sans);font-size:10px;cursor:pointer;transition:all .1s;white-space:nowrap}
-.btn-export:hover{border-color:var(--white);color:var(--white)}
+.btn-export{padding:4px 11px;background:transparent;border:1px solid var(--b2);border-radius:4px;color:var(--muted);font-family:var(--sans);font-size:10px;cursor:not-allowed;transition:all .1s;white-space:nowrap;opacity:.4}
+.btn-export.active{border-color:var(--blue);color:var(--white);cursor:pointer;opacity:1}
+.btn-export.active:hover{border-color:var(--white)}
+
+/* Keyboard hint bar */
+.kbd-hint-bar{padding:4px 14px;font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em;background:var(--p1);border-bottom:1px solid var(--b1);flex-shrink:0}
 
 /* Flag log */
 .flg-log{flex:1;overflow-y:auto;background:var(--bg)}
 .flg-empty{padding:14px;color:var(--muted);font-size:12px;font-style:italic}
 .fi{display:flex;gap:8px;align-items:flex-start;padding:6px 14px;border-bottom:1px solid rgba(37,37,48,.6);cursor:default}
 .fi:hover{background:var(--p2)}
-.fi-num{font-family:var(--mono);font-size:10px;color:var(--muted);width:28px;flex-shrink:0;padding-top:2px}
-.fi-tc{font-family:var(--mono);font-size:10px;color:var(--amber);flex-shrink:0;padding-top:2px;width:68px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(240,160,32,.35)}
-.fi-type{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);width:76px;flex-shrink:0;padding-top:3px}
+.fi-num{font-family:var(--mono);font-size:11px;color:var(--muted);width:28px;flex-shrink:0;padding-top:2px}
+.fi-tc{font-family:var(--mono);font-size:11px;color:var(--blue);flex-shrink:0;padding-top:2px;width:68px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(41,128,185,.35)}
+.fi-type{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);width:76px;flex-shrink:0;padding-top:3px}
 .fi-body{flex:1}
-.fi-text{font-size:12px;color:#808098;white-space:pre-line;line-height:1.35}
-.fi-meta{font-size:10px;color:var(--muted);margin-top:1px}
+.fi-text{font-size:13px;color:#808098;white-space:pre-line;line-height:1.35}
+.fi-meta{font-size:11px;color:var(--muted);margin-top:1px}
 .fi-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0}
 .fi-rm:hover{color:var(--red)}
 
 /* Sidebar */
 .sidebar{width:250px;flex-shrink:0;background:var(--p1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
 .sb-hdr{padding:8px 12px;border-bottom:1px solid var(--b1);font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;flex-shrink:0}
-.sb-total{color:var(--amber);font-family:var(--mono)}
+.sb-total{color:var(--blue);font-family:var(--mono)}
 .cap-list{overflow-y:auto;flex:1}
 .cl-empty{padding:14px;color:var(--muted);font-size:11px;font-style:italic}
 .cl-item{display:flex;gap:7px;align-items:flex-start;padding:5px 12px;border-bottom:1px solid rgba(37,37,48,.5);cursor:pointer;transition:background .1s}
 .cl-item:hover{background:var(--p2)}
-.cl-item.active{background:rgba(240,160,32,.07);border-left:2px solid var(--amber);padding-left:10px}
-.cl-tc{font-family:var(--mono);font-size:9px;color:var(--muted);padding-top:2px;flex-shrink:0;width:54px}
-.cl-item.active .cl-tc{color:var(--amber)}
-.cl-text{font-size:11px;color:#808098;white-space:pre-line;line-height:1.35}
+.cl-item.active{background:rgba(41,128,185,.07);border-left:2px solid var(--blue);padding-left:10px}
+.cl-tc{font-family:var(--mono);font-size:11px;color:var(--muted);padding-top:2px;flex-shrink:0;width:54px}
+.cl-item.active .cl-tc{color:var(--blue)}
+.cl-text{font-size:13px;color:#808098;white-space:pre-line;line-height:1.35}
 .cl-item.active .cl-text{color:var(--white)}
 
 /* Scrollbars */
@@ -113,20 +131,38 @@ video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#00
 </head>
 <body>
 
+<div class="stripe-bar"></div>
+
 <div class="hdr">
-  <div class="logo">CannDo <em>/</em> SRT Monitor</div>
+  <div class="logo">
+    <div class="clapper-wrap">
+      <div class="cl-body"></div>
+      <div class="cl-top">
+        <div class="cl-stripes">
+          <span style="background:#27ae60"></span>
+          <span style="background:#f1c40f"></span>
+          <span style="background:#2980b9"></span>
+          <span style="background:#c0392b"></span>
+          <span style="background:#999"></span>
+        </div>
+      </div>
+    </div>
+    <span class="logo-cando">CannDo</span>
+    <em>/ SRT Monitor</em>
+  </div>
   <div class="file-btns">
     <label class="fbtn" id="lbl-v">
+      <span class="btn-order">1</span>
       <span id="lbl-v-txt">&#9654; Video</span>
       <input type="file" id="inp-v" accept="video/*,audio/*">
     </label>
     <label class="fbtn" id="lbl-s">
+      <span class="btn-order">2</span>
       <span id="lbl-s-txt">&#9776; SRT</span>
       <input type="file" id="inp-s" accept=".srt,.txt">
     </label>
   </div>
   <div class="status" id="status">Load video + SRT to begin</div>
-  <div class="kbd-hint">F = flag &nbsp;|&nbsp; 1–5 = issue type &nbsp;|&nbsp; click list to seek</div>
 </div>
 
 <div class="body">
@@ -148,7 +184,7 @@ video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#00
       <div class="diag-row">
         <div class="dc">
           <div class="dl">Playhead</div>
-          <div class="dv amber" id="d-time">--:--:--.---</div>
+          <div class="dv blue" id="d-time">--:--:--.---</div>
         </div>
         <div class="dc">
           <div class="dl">Caption</div>
@@ -184,17 +220,20 @@ video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#00
 
     <div class="flg-bar">
       <div class="ft-grp" id="ft-grp">
-        <button class="ftb" data-t="Too Early">1 Too Early</button>
-        <button class="ftb" data-t="Too Late">2 Too Late</button>
+        <button class="ftb" data-t="Early">1 Early</button>
+        <button class="ftb" data-t="Late">2 Late</button>
         <button class="ftb" data-t="Too Long">3 Too Long</button>
-        <button class="ftb" data-t="Read-ahead">4 Read-ahead</button>
-        <button class="ftb" data-t="Other">5 Other</button>
+        <button class="ftb" data-t="Read Ahead">4 Read Ahead</button>
+        <button class="ftb sel" data-t="Other">5 Other</button>
       </div>
-      <input class="flg-note" id="flg-note" type="text" placeholder="Note (optional)">
-      <button class="btn-flag" id="btn-flag">&#9873; Flag (F)</button>
+      <input class="flg-note" id="flg-note" type="text" placeholder="Note (added to next flag)">
+      <span class="flg-target" id="flg-target"></span>
+      <button class="btn-flag disabled" id="btn-flag">&#9873; Flag (F)</button>
       <span class="flg-ct" id="flg-ct">0 flags</span>
       <button class="btn-export" id="btn-export">Export Report</button>
     </div>
+
+    <div class="kbd-hint-bar">F = flag &nbsp;|&nbsp; 1&#8211;5 = issue type &nbsp;|&nbsp; Space = play/pause &nbsp;|&nbsp; click list to seek</div>
 
     <div class="flg-log" id="flg-log">
       <div class="flg-empty">No flags yet. Play the video, then press F or click Flag to mark the current caption.</div>
@@ -217,7 +256,7 @@ video{display:block;width:100%;max-height:42vh;object-fit:contain;background:#00
 <script>
 var captions = [];
 var flags = [];
-var selFlagType = null;
+var selFlagType = 'Other';
 var lastCapIdx = undefined;
 var frameCount = 0;
 var loopStarted = false;
@@ -271,6 +310,12 @@ function p2(n) { return String(Math.floor(n)).padStart(2, '0'); }
 function p3(n) { return String(Math.floor(n)).padStart(3, '0'); }
 function secFmt(s) { return isFinite(s) ? s.toFixed(2) + 's' : '--'; }
 
+function mk(tag, cls) {
+  var el = document.createElement(tag);
+  if (cls) el.className = cls;
+  return el;
+}
+
 // ── File Loading ──────────────────────────────────────────────────────────────
 document.getElementById('inp-v').addEventListener('change', function(e) {
   var f = e.target.files[0];
@@ -278,7 +323,7 @@ document.getElementById('inp-v').addEventListener('change', function(e) {
   vid.src = URL.createObjectURL(f);
   vid.style.display = 'block';
   document.getElementById('ph').style.display = 'none';
-  document.getElementById('lbl-v-txt').textContent = '\u2713 ' + truncate(f.name, 22);
+  document.getElementById('lbl-v-txt').textContent = '✓ ' + truncate(f.name, 22);
   document.getElementById('lbl-v').classList.add('ok');
   if (!loopStarted) { loopStarted = true; requestAnimationFrame(tick); }
   checkReady();
@@ -292,9 +337,10 @@ document.getElementById('inp-s').addEventListener('change', function(e) {
     captions = parseSRT(ev.target.result);
     lastCapIdx = undefined;
     buildCapList();
-    document.getElementById('lbl-s-txt').textContent = '\u2713 ' + captions.length + ' captions';
+    document.getElementById('lbl-s-txt').textContent = '✓ ' + captions.length + ' captions';
     document.getElementById('lbl-s').classList.add('ok');
     document.getElementById('sb-total').textContent = captions.length;
+    updateFlagBtnState();
     checkReady();
   };
   reader.readAsText(f);
@@ -307,14 +353,23 @@ function checkReady() {
   var hasS = captions.length > 0;
   var el = document.getElementById('status');
   if (hasV && hasS) {
-    el.textContent = 'Ready \u2014 ' + captions.length + ' captions loaded';
+    el.textContent = 'Ready — ' + captions.length + ' captions loaded';
     el.className = 'status ok';
   } else if (hasV) {
-    el.textContent = 'Video loaded \u2014 load SRT to continue';
+    el.textContent = 'Video loaded — load SRT to continue';
     el.className = 'status';
   } else if (hasS) {
-    el.textContent = 'SRT loaded \u2014 load video to continue';
+    el.textContent = 'SRT loaded — load video to continue';
     el.className = 'status';
+  }
+}
+
+function updateFlagBtnState() {
+  var btn = document.getElementById('btn-flag');
+  if (!captions.length) {
+    btn.classList.add('disabled');
+  } else {
+    btn.classList.remove('disabled');
   }
 }
 
@@ -350,11 +405,13 @@ function tick() {
       clearDiag();
       setActive(-1);
     }
+    updateFlagTarget();
   }
 
   // Countdown update every ~8 frames when between captions
   if (found < 0 && frameCount % 8 === 0) {
     updateCountdown(t);
+    updateFlagTarget();
   }
 
   requestAnimationFrame(tick);
@@ -413,21 +470,26 @@ function updateCountdown(t) {
   }
 }
 
+// ── Flag Target Indicator ─────────────────────────────────────────────────────
+function updateFlagTarget() {
+  var el = document.getElementById('flg-target');
+  if (!el || !captions.length) { if (el) el.textContent = ''; return; }
+  var i = (typeof lastCapIdx === 'number' && lastCapIdx >= 0) ? lastCapIdx : nearestPast();
+  el.textContent = i >= 0 ? 'Flagging: Caption #' + (i + 1) : '';
+}
+
 // ── Caption List ──────────────────────────────────────────────────────────────
 function buildCapList() {
   var list = document.getElementById('cap-list');
-  list.innerHTML = '';
+  while (list.firstChild) list.removeChild(list.firstChild);
   var frag = document.createDocumentFragment();
   for (var i = 0; i < captions.length; i++) {
     (function(cap, idx) {
-      var el  = document.createElement('div');
-      el.className = 'cl-item';
+      var el  = mk('div', 'cl-item');
       el.dataset.idx = idx;
-      var tc  = document.createElement('div');
-      tc.className = 'cl-tc';
+      var tc  = mk('div', 'cl-tc');
       tc.textContent = secToTC(cap.start).slice(0, 8);
-      var tx  = document.createElement('div');
-      tx.className = 'cl-text';
+      var tx  = mk('div', 'cl-text');
       tx.textContent = cap.text;
       el.appendChild(tc);
       el.appendChild(tx);
@@ -457,8 +519,11 @@ document.getElementById('ft-grp').addEventListener('click', function(e) {
   if (!btn) return;
   var t = btn.dataset.t;
   if (selFlagType === t) {
-    selFlagType = null;
-    btn.classList.remove('sel');
+    selFlagType = 'Other';
+    document.querySelectorAll('.ftb').forEach(function(b) {
+      b.classList.remove('sel');
+      if (b.dataset.t === 'Other') b.classList.add('sel');
+    });
   } else {
     document.querySelectorAll('.ftb').forEach(function(b) { b.classList.remove('sel'); });
     selFlagType = t;
@@ -467,6 +532,10 @@ document.getElementById('ft-grp').addEventListener('click', function(e) {
 });
 
 document.getElementById('btn-flag').addEventListener('click', doFlag);
+
+document.getElementById('flg-note').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); doFlag(); }
+});
 
 function doFlag() {
   if (!captions.length) return;
@@ -480,7 +549,7 @@ function doFlag() {
     capIdx: i,
     tc:     secToTC(cap.start),
     text:   cap.text,
-    type:   selFlagType || 'Other',
+    type:   selFlagType,
     note:   document.getElementById('flg-note').value.trim(),
     dur:    cap.end - cap.start,
     gap:    next ? next.start - cap.end : null
@@ -502,66 +571,97 @@ function renderFlags() {
   var ct  = document.getElementById('flg-ct');
   ct.textContent = flags.length + (flags.length === 1 ? ' flag' : ' flags');
   ct.className = 'flg-ct' + (flags.length ? ' has' : '');
+  updateExportBtn();
+
+  while (log.firstChild) log.removeChild(log.firstChild);
 
   if (!flags.length) {
-    log.innerHTML = '<div class="flg-empty">No flags yet. Play the video, then press F or click Flag to mark the current caption.</div>';
+    var empty = mk('div', 'flg-empty');
+    empty.textContent = 'No flags yet. Play the video, then press F or click Flag to mark the current caption.';
+    log.appendChild(empty);
     return;
   }
 
-  log.innerHTML = '';
   var frag = document.createDocumentFragment();
   flags.forEach(function(f, i) {
-    var el = document.createElement('div');
-    el.className = 'fi';
-    var gapStr = f.gap !== null ? 'gap\u2192next: ' + f.gap.toFixed(2) + 's' : 'last cap';
-    el.innerHTML =
-      '<div class="fi-num">#' + f.capNum + '</div>' +
-      '<div class="fi-tc" data-ci="' + f.capIdx + '">' + f.tc + '</div>' +
-      '<div class="fi-type">' + esc(f.type) + '</div>' +
-      '<div class="fi-body">' +
-        '<div class="fi-text">' + esc(f.text).replace(/\n/g, '<br>') + '</div>' +
-        '<div class="fi-meta">dur: ' + f.dur.toFixed(2) + 's &nbsp;\u00b7&nbsp; ' + gapStr +
-          (f.note ? ' &nbsp;\u00b7&nbsp; ' + esc(f.note) : '') + '</div>' +
-      '</div>' +
-      '<button class="fi-rm" data-fi="' + i + '" title="Remove">\u00d7</button>';
+    var el = mk('div', 'fi');
+
+    var numEl = mk('div', 'fi-num');
+    numEl.textContent = '#' + f.capNum;
+
+    var tcEl = mk('div', 'fi-tc');
+    tcEl.dataset.ci = f.capIdx;
+    tcEl.textContent = f.tc;
+    tcEl.addEventListener('click', function() {
+      var ci = parseInt(tcEl.dataset.ci);
+      if (captions[ci]) { vid.currentTime = captions[ci].start + 0.05; if (vid.paused) vid.play(); }
+    });
+
+    var typeEl = mk('div', 'fi-type');
+    typeEl.textContent = f.type;
+
+    var bodyEl = mk('div', 'fi-body');
+
+    var textEl = mk('div', 'fi-text');
+    textEl.textContent = f.text;
+
+    var gapStr = f.gap !== null ? 'gap→next: ' + f.gap.toFixed(2) + 's' : 'last cap';
+    var metaEl = mk('div', 'fi-meta');
+    metaEl.textContent = 'dur: ' + f.dur.toFixed(2) + 's · ' + gapStr +
+      (f.note ? ' · ' + f.note : '');
+
+    bodyEl.appendChild(textEl);
+    bodyEl.appendChild(metaEl);
+
+    var rmEl = mk('button', 'fi-rm');
+    rmEl.dataset.fi = i;
+    rmEl.title = 'Remove';
+    rmEl.textContent = '×';
+    rmEl.addEventListener('click', function(e) {
+      e.stopPropagation();
+      flags.splice(parseInt(rmEl.dataset.fi), 1);
+      renderFlags();
+    });
+
+    el.appendChild(numEl);
+    el.appendChild(tcEl);
+    el.appendChild(typeEl);
+    el.appendChild(bodyEl);
+    el.appendChild(rmEl);
     frag.appendChild(el);
   });
   log.appendChild(frag);
-
-  log.querySelectorAll('.fi-tc').forEach(function(tc) {
-    tc.addEventListener('click', function() {
-      var ci = parseInt(tc.dataset.ci);
-      if (captions[ci]) { vid.currentTime = captions[ci].start + 0.05; if (vid.paused) vid.play(); }
-    });
-  });
-  log.querySelectorAll('.fi-rm').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      flags.splice(parseInt(btn.dataset.fi), 1);
-      renderFlags();
-    });
-  });
 }
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function updateExportBtn() {
+  var btn = document.getElementById('btn-export');
+  if (flags.length > 0) {
+    btn.classList.add('active');
+  } else {
+    btn.classList.remove('active');
+  }
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
 document.getElementById('btn-export').addEventListener('click', function() {
-  if (!flags.length) { alert('No flags to export.'); return; }
+  if (!flags.length) return;
+  var now = new Date();
   var lines = [
-    'CannDo SRT Monitor \u2014 Flag Report',
-    'Generated: ' + new Date().toLocaleString(),
+    'TOTAL_FLAGS: ' + flags.length,
+    'SRT_CAPTIONS: ' + captions.length,
+    'EXPORT_DATE: ' + now.toISOString().slice(0, 10),
+    '',
+    'CannDo SRT Monitor — Flag Report',
+    'Generated: ' + now.toLocaleString(),
     'Flags: ' + flags.length,
-    '\u2500'.repeat(56), ''
+    '─'.repeat(56), ''
   ];
   flags.forEach(function(f, i) {
     lines.push('FLAG ' + (i + 1));
     lines.push('Caption:   #' + f.capNum + '  ' + f.tc);
     lines.push('Issue:     ' + f.type);
     lines.push('Duration:  ' + f.dur.toFixed(2) + 's');
-    if (f.gap !== null) lines.push('Gap\u2192next: ' + f.gap.toFixed(2) + 's');
+    if (f.gap !== null) lines.push('Gap→next: ' + f.gap.toFixed(2) + 's');
     lines.push('Text:      ' + f.text.replace(/\n/g, ' / '));
     if (f.note) lines.push('Note:      ' + f.note);
     lines.push('');
@@ -569,23 +669,32 @@ document.getElementById('btn-export').addEventListener('click', function() {
   var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'srt-flags-' + new Date().toISOString().slice(0,10) + '.txt';
+  a.download = 'srt-flags-' + now.toISOString().slice(0,10) + '.txt';
   a.click();
 });
 
 // ── Keyboard Shortcuts ────────────────────────────────────────────────────────
-var typeKeys = { '1':'Too Early', '2':'Too Late', '3':'Too Long', '4':'Read-ahead', '5':'Other' };
+var typeKeys = { '1':'Early', '2':'Late', '3':'Too Long', '4':'Read Ahead', '5':'Other' };
 
 document.addEventListener('keydown', function(e) {
   if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    if (vid.paused) vid.play(); else vid.pause();
+    return;
+  }
   if (e.key.toLowerCase() === 'f') { e.preventDefault(); doFlag(); return; }
   if (typeKeys[e.key]) {
     e.preventDefault();
     var t = typeKeys[e.key];
-    document.querySelectorAll('.ftb').forEach(function(b) { b.classList.remove('sel'); });
     if (selFlagType === t) {
-      selFlagType = null;
+      selFlagType = 'Other';
+      document.querySelectorAll('.ftb').forEach(function(b) {
+        b.classList.remove('sel');
+        if (b.dataset.t === 'Other') b.classList.add('sel');
+      });
     } else {
+      document.querySelectorAll('.ftb').forEach(function(b) { b.classList.remove('sel'); });
       selFlagType = t;
       document.querySelectorAll('.ftb').forEach(function(b) {
         if (b.dataset.t === t) b.classList.add('sel');
