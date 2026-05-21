@@ -87,6 +87,8 @@ Follows the same pattern as CannDo Transcribe.
 | Version | Date | Key change |
 |---------|------|------------|
 | v1.0 | 2026-05-19, 6:23 PM PDT | Design pass v1.0 — brand alignment, typography, header restructure, flag UX, spacebar |
+| v1.2 | 2026-05-20 | Phase 1 cosmetic pass: fonts +4px, scrubber below video, 5s/15s back controls, pulsing file inputs, caption list width +10%, active caption centered, SAVE UPDATED SRT button added |
+| v1.3 | 2026-05-20 | Phase 2: caption edit panel (3-row prev/active/next), mode toggle (Caption Edit / Flag Debug), commit button with red/green dirty state, playback controls reorganized (15s / 5s / ▶LAY), sidebar click seeks without autoplay, SAVE button wired to hasUnsavedEdits |
 
 End-of-session workflow:
 ```bash
@@ -99,6 +101,15 @@ netlify deploy --prod --site c6cfc095-c3a5-47d3-b4c7-38af39c62ec4 --dir .
 ```
 
 Always update the `ver-badge` text in the HTML to match the new version number before copying to `index.html`.
+
+---
+
+## Open Issues
+
+- Spacebar play/pause needs work — behavior inconsistent in some focus states. Investigate and fix next session.
+- Initial playhead position — when video + SRT first load, determine correct default playhead start position. Specify and implement next session.
+- SAVE UPDATED SRT button — needs to be moved and renamed. Exact position and label to be determined next session.
+- Double timestamp in filename — when an SRT is exported from Transcribe (which stamps the filename) and then saved again from Monitor (which stamps again), the filename ends up with two timestamps in a row. Acceptable for now; fix at merge.
 
 ---
 
